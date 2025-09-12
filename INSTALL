@@ -1,0 +1,5 @@
+docker build --no-cache -t linkcoin:core .
+
+docker run -it --rm linkcoin:core bash
+
+./build-linkcoin.sh

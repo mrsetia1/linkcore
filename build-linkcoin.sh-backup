@@ -1,0 +1,53 @@
+#!/bin/bash
+
+set -e
+
+echo "🚀 Building linkcoin for Debian 7..."
+
+# Check if we're in the right directory
+if [ ! -f "src/makefile.unix" ]; then
+    echo "❌ Error: Run this script from the linkcoin root directory"
+    exit 1
+fi
+
+# BDB 4.8 path
+export BDB_PREFIX="/usr/local/BerkeleyDB.4.8"
+export BDB_INCLUDE_PATH="$BDB_PREFIX/include"
+export BDB_LIB_PATH="$BDB_PREFIX/lib"
+
+# Install dependencies
+echo "📦 Installing dependencies..."
+apt-get -o Acquire::Check-Valid-Until=false \
+       -o Acquire::AllowInsecureRepositories=true \
+       update -y
+
+apt-get install -y --allow-unauthenticated --force-yes \
+    build-essential libtool autotools-dev automake pkg-config \
+    libssl-dev libboost-all-dev libminiupnpc-dev \
+    libevent-dev git
+
+# Build Berkeley DB 4.8 jika belum ada
+if [ ! -d "$BDB_PREFIX" ]; then
+    echo "📦 Building Berkeley DB 4.8..."
+    cd /tmp
+    wget http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz
+    tar -xzf db-4.8.30.NC.tar.gz
+    cd db-4.8.30.NC/build_unix
+    ../dist/configure --prefix=$BDB_PREFIX --enable-cxx
+    make -j$(nproc)
+    make install
+    cd /-
+fi
+
+# Compile daemon
+cd src
+make -f makefile.unix clean || true
+
+echo "🔨 Building linkcoin daemon..."
+make -f makefile.unix USE_UPNP=- \
+    BDB_INCLUDE_PATH=$BDB_INCLUDE_PATH \
+    BDB_LIB_PATH=$BDB_LIB_PATH \
+    STATIC=1
+
+echo "✅ Build completed!"
+ls -la linkcoind

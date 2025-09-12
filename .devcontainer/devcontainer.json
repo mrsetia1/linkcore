@@ -1,0 +1,15 @@
+{
+    "name": "LinkCoin-eth Build Environment",
+    "dockerFile": "Dockerfile",
+    "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+    },
+    "extensions": [
+        "ms-vscode.cpptools",
+        "twxs.cmake",
+        "ms-vscode.cmake-tools"
+    ],
+    "forwardPorts": [8332, 8333, 18332, 18333, 18444],
+    "postCreateCommand": "./autogen.sh && ./configure --disable-wallet --without-gui && make -j$(nproc)",
+    "remoteUser": "vscode"
+}
